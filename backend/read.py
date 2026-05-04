@@ -8,7 +8,7 @@ from pathlib import Path
 
 import cv2 as cv
 import numpy as np
-from tqdm import tqdm
+# from tqdm import tqdm
 
 def turn(ar):
     ar= [hex(i) for i in ar]
@@ -129,10 +129,22 @@ def read_from_dgrl(dgrl):
 
 
 if __name__ == '__main__':
-    dgrl_paths = Path('./data/HWDB2.0Train').iterdir()
-    dgrl_paths = list(dgrl_paths)
-    for dgrl_path in tqdm(dgrl_paths):
-        print(dgrl_path)
-        read_from_dgrl(dgrl_path)
-        break
+    # dgrl_paths = Path('./data/HWDB2.0Train').iterdir()
+    # dgrl_paths = list(dgrl_paths)
+    # for dgrl_path in tqdm(dgrl_paths):
+    #     print(dgrl_path)
+    #     read_from_dgrl(dgrl_path)
+    #     break
+    from datetime import datetime
+
+    now = datetime.now()
+
+    year = now.year
+    month = now.month
+    day = now.day
+    hour = now.hour
+    min = now.minute
+    sec = now.second
+
+    print(year, month, day, hour, min, sec)
 

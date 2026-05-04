@@ -16,8 +16,8 @@ AUDIO_UPLOAD_FOLDER = os.path.join(UPLOAD_FOLDER, 'audio')
 ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 # PostgreSQL
-DB_HOST = 'localhost'
+DB_HOST = '127.0.0.1'
 DB_PORT = 5432
-DB_NAME = 'dictation_db'
+DB_NAME = 'ocr'
 DB_USER = 'postgres'
-DB_PASSWORD = 'postgres'
+DB_PASSWORD = '123456'
