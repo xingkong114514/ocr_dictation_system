@@ -1,2 +1,8 @@
 .idea
 backend/.venv
+backend/result/*.wav
+backend/uploads
+backend/ocr/checkpoints
+backend/fastspeech/hifigan/generator_universal.pth.tar
+backend/fastspeech/output/ckpt/biaobei/8000.pth.tar
+backend/fastspeech/transformer/prosody_model/best_model.pt
