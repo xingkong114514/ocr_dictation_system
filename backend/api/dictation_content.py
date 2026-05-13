@@ -17,14 +17,39 @@ def get_dictation_content():
     payload = request.get_json(silent=True) or {}
     unit_id=payload.get('unit_id') or request.args.get('unit_id')
     lesson_id=payload.get('lesson_id') or request.args.get('lesson_id')
+    grade_term=payload.get('grade_term') or request.args.get('grade_term')
+    if grade_term == "一上":
+        grade_term = "1+"
+    elif grade_term == "一下":
+        grade_term = "1-"
+    elif grade_term == "二上":
+        grade_term = "2+"
+    elif grade_term == "二下":
+        grade_term = "2-"
+    elif grade_term == "三上":
+        grade_term = "3+"
+    elif grade_term == "三下":
+        grade_term = "3-"
+    elif grade_term == "四上":
+        grade_term = "4+"
+    elif grade_term == "四下":
+        grade_term = "4-"
+    elif grade_term == "五上":
+        grade_term = "5+"
+    elif grade_term == "五下":
+        grade_term = "5-"
+    elif grade_term == "六上":
+        grade_term = "6+"
+    else:
+        grade_term = "6-"
     print(unit_id,lesson_id)
     sql='''
-    select word_no, word_text from dictation_word where unit_id=%s and lesson_id=%s
+    select word_no, word_text from dictation_word where unit_id=%s and lesson_id=%s and grade_term=%s
     '''
     try:
         conn=get_connection()
         with conn.cursor() as cursor:
-            cursor.execute(sql, (unit_id, lesson_id))
+            cursor.execute(sql, (unit_id, lesson_id,grade_term))
             rows = cursor.fetchall()
             print(rows)
     except Exception as exc:

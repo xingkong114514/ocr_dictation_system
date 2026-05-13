@@ -4,6 +4,11 @@ from werkzeug.utils import secure_filename
 from flask import Blueprint
 from ocr.process import entry
 from database.db import get_connection
+from datetime import datetime
+from datetime import date
+from psycopg2.extras import Json
+import json
+import time
 app = Flask(__name__)
 
 UPLOAD_DIR = "uploads"
@@ -11,36 +16,47 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 upload_result_bp = Blueprint('upload_result', __name__)
 @upload_result_bp.route("/upload_result", methods=["GET","POST"])
 def upload_result():
+
     file = request.files.get("file")
     lesson_id = request.form.get("lesson_id")
     unit_id = request.form.get("unit_id")
     grade_term = request.form.get("grade_term")
-    if grade_term =="一上":
-        grade_term = "1+"
-    elif grade_term=="一下":
-        grade_term = "1-"
-    elif grade_term == "二上":
-        grade_term = "2+"
-    elif grade_term=="二下":
-        grade_term = "2-"
-    elif grade_term=="三上":
-        grade_term = "3+"
-    elif grade_term=="三下":
-        grade_term = "3-"
-    elif grade_term=="四上":
-        grade_term = "4+"
-    elif grade_term=="四下":
-        grade_term = "4-"
-    elif grade_term=="五上":
-        grade_term = "5+"
-    elif grade_term=="五下":
-        grade_term = "5-"
-    elif grade_term=="六上":
-        grade_term = "6+"
+    open_id = request.form.get("openid")
+    items = request.form.get("items")
+    dictation_payload=request.form.get("dictation_payload")
+    print(f"request.form: {request.form}")
+    print(f"items:{items}")
+    if dictation_payload=="":
+        if grade_term =="一上":
+            grade_term = "1+"
+        elif grade_term=="一下":
+            grade_term = "1-"
+        elif grade_term == "二上":
+            grade_term = "2+"
+        elif grade_term=="二下":
+            grade_term = "2-"
+        elif grade_term=="三上":
+            grade_term = "3+"
+        elif grade_term=="三下":
+            grade_term = "3-"
+        elif grade_term=="四上":
+            grade_term = "4+"
+        elif grade_term=="四下":
+            grade_term = "4-"
+        elif grade_term=="五上":
+            grade_term = "5+"
+        elif grade_term=="五下":
+            grade_term = "5-"
+        elif grade_term=="六上":
+            grade_term = "6+"
+        else:
+            grade_term = "6-"
+        # items=request.form.get("items")
+        # print(items)
     else:
-        grade_term = "6-"
-    # items=request.form.get("items")
-    # print(items)
+        lesson_id = -1
+        unit_id = -1
+        grade_term = "None"
 
     if file is None:
         return jsonify({
@@ -66,34 +82,55 @@ def upload_result():
     print(save_path)
     entry(save_path,img_name=save_name)
 
-    sql = ''' \
-          select word_no, word_text \
-          from dictation_word \
-          where unit_id = %s \
-            and lesson_id = %s\
-              and grade_term = %s\
-        '''
-    try:
-        conn = get_connection()
-        with conn.cursor() as cursor:
-            cursor.execute(sql, (unit_id, lesson_id,grade_term))
-            rows = cursor.fetchall()
-            print(rows)
-    except Exception as exc:
-        return jsonify({
-            "code": 500,
-            "msg": f"database query failed: {exc}"
-        }), 500
-    finally:
-        if conn is not None:
-            conn.close()
-    unit_map = {}
-    for i in range(len(rows)):
-        unit_map[i] = {
-            "id": rows[i][0],
-            "text": rows[i][1],
-        }
+    if dictation_payload == "":
+        sql = ''' \
+              select word_no, word_text \
+              from dictation_word \
+              where unit_id = %s \
+                and lesson_id = %s\
+                  and grade_term = %s\
+            '''
+        try:
+            conn = get_connection()
+            with conn.cursor() as cursor:
+                cursor.execute(sql, (unit_id, lesson_id,grade_term))
+                rows = cursor.fetchall()
+                print(rows)
+        except Exception as exc:
+            return jsonify({
+                "code": 500,
+                "msg": f"database query failed: {exc}"
+            }), 500
+        finally:
+            if conn is not None:
+                conn.close()
+        unit_map = {}
+        for i in range(len(rows)):
+            unit_map[i] = {
+                "id": rows[i][0],
+                "text": rows[i][1],
+            }
+        print(unit_map)
+    else:
+        unit_map = {}
+        custom_items = json.loads(dictation_payload)['custom_items']
+        print("custom_items:",custom_items)
+        for i in range(len(custom_items)):
+            id=custom_items[i]["id"]
+            text=custom_items[i]["text"]
+            unit_map[i] = {
+                "id": id,
+                "text": text
+            }
 
+    with open(os.path.join("uploads","result", save_name.split(".")[0]+".txt"), "r",encoding="utf-8") as f:
+        content=f.readlines()
+    result=compare_content_with_unit_map("1我2地3你", unit_map)
+    output=process(result)
+    timestamp_ms = int(time.time() * 1000)
+    print(timestamp_ms)
+    chapter=f'{grade_term}.{unit_id}.{lesson_id}'
+    insert_into_record(timestamp_ms,open_id,output,chapter)
     return jsonify({
         "code": 200,
         "msg": "上传成功",
@@ -106,3 +143,103 @@ def upload_result():
             "saved_path": save_path
         }
     })
+
+def compare_content_with_unit_map(content, unit_map):
+    """
+    content 中的识别结果与 unit_map 中的答案做匹配
+
+    参数:
+        content: str
+            后端文字识别结果，例如 "天地你他"
+        unit_map: dict
+            标准答案，例如:
+            {
+                0: {'id': 1, 'text': '天'},
+                1: {'id': 2, 'text': '地'},
+                2: {'id': 3, 'text': '人'},
+                3: {'id': 4, 'text': '你'},
+                4: {'id': 5, 'text': '我'},
+                5: {'id': 6, 'text': '他'}
+            }
+    返回:
+        dict，包含:
+        - matched_strings: 匹配成功的字符串列表
+        - matched_count: 匹配成功数量
+        - unmatched_strings: 匹配失败的字符串列表
+        - unmatched_count: 匹配失败数量
+    """
+
+    matched_strings = []
+    unmatched_strings = []
+
+    if not isinstance(content, str):
+        content = str(content)
+
+    for _, value in unit_map.items():
+        text = value.get('text', '')
+        if text in content:
+            matched_strings.append(text)
+        else:
+            unmatched_strings.append(text)
+
+    return {
+        'matched_strings': matched_strings,
+        'matched_count': len(matched_strings),
+        'unmatched_strings': unmatched_strings,
+        'unmatched_count': len(unmatched_strings)
+    }
+
+def process(result):
+    """
+    将 compare_content_with_unit_map 的结果转换为:
+    {
+        "日": 1,
+        "月": 1,
+        "照": 0
+    }
+    其中 1 表示匹配成功，0 表示未匹配
+    """
+    output = {}
+
+    for text in result.get('matched_strings', []):
+        output[text] = 1
+
+    for text in result.get('unmatched_strings', []):
+        output[text] = 0
+
+    return output
+
+def insert_into_record(timestamp_ms, open_id, output, chapter):
+    """
+    向 record 表插入一条记录
+
+    参数:
+        year: int
+        month: int
+        day: int
+        open_id: str
+        output: dict
+            例如 {"日": 1, "月": 1, "照": 0}
+        chapter: str
+            例如 "1+.1.2"
+    """
+    conn = None
+    sql = """
+        INSERT INTO record (time, open_id, result, chapter)
+        VALUES (%s, %s, %s, %s)
+    """
+
+    try:
+        conn = get_connection()
+        with conn.cursor() as cursor:
+            cursor.execute(sql, (timestamp_ms, open_id, Json(output, dumps=lambda x: json.dumps(x, ensure_ascii=False)), chapter))
+        conn.commit()
+        return True
+    except Exception as exc:
+        if conn is not None:
+            conn.rollback()
+        print(f"insert_into_record error: {exc}")
+        return False
+    finally:
+        if conn is not None:
+            conn.close()

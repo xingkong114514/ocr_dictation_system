@@ -1,6 +1,6 @@
 # 8
 # 4
-with open("oneon.txt","w",encoding='utf-8') as f:
+with open("test.txt","w",encoding='utf-8') as f:
     while(True):
         Unit=int(input("输入单元总数:"))
         if Unit==-1:
@@ -9,6 +9,9 @@ with open("oneon.txt","w",encoding='utf-8') as f:
             section=int(input("输入节数:"))
             for s in range(1,section+1):
                 word=input("输入词语")
+                word=word.split(" ")
+                print(word)
+                print(type(word))
                 result = []
                 for i in range(len(word)):
                     if(word[i]!=" "):
