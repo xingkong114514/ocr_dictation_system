@@ -50,6 +50,10 @@ def teacher_login():
     password = str(data.get("password", "")).strip()
     role = str(data.get("role", "")).strip()
     print(f"username:{username}, password:{password}, role:{role}")
+    if role=="teacher":
+        role=1
+    else:
+        role=2
     if not username:
         return jsonify({
             "code": 400,
@@ -64,13 +68,13 @@ def teacher_login():
     sql = """
           SELECT user_name, password,real_name
           FROM users
-          WHERE user_name = %s \
+          WHERE user_name = %s AND role= %s \
           """
 
     try:
         conn = get_connection()
         with conn.cursor() as cursor:
-            cursor.execute(sql,(username,))
+            cursor.execute(sql,(username,role))
             user = cursor.fetchone()
 
         if not user:
@@ -118,6 +122,10 @@ def parent_login():
     password = str(data.get("password", "")).strip()
     role = str(data.get("role", "")).strip()
     print(f"username:{username}, password:{password}, role:{role}")
+    if role=="teacher":
+        role=1
+    else:
+        role=2
     if not username:
         return jsonify({
             "code": 400,
@@ -132,13 +140,13 @@ def parent_login():
     sql = """
           SELECT user_name, password,real_name
           FROM users
-          WHERE user_name = %s \
+          WHERE user_name = %s AND role=%s \
           """
 
     try:
         conn = get_connection()
         with conn.cursor() as cursor:
-            cursor.execute(sql,(username,))
+            cursor.execute(sql,(username,role))
             user = cursor.fetchone()
 
         if not user:

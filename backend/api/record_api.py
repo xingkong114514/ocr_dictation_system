@@ -27,12 +27,11 @@ def format_timestamp(time_value):
 
 @record_bp.route('/record', methods=['GET', 'POST'])
 def record_list():
-    """
-    根据 open_id 获取听写历史记录
-    """
+
     payload = request.get_json(silent=True) or {}
     open_id = payload.get('open_id') or request.args.get('open_id')
-
+    user_name= payload.get('user_name')
+    print(f"open_id:{open_id}, user_name:{user_name}")
     if not open_id:
         return jsonify({
             "code": 400,
@@ -42,7 +41,7 @@ def record_list():
     sql = """
         select time, result, chapter
         from record
-        where open_id = %s
+        where user_name = %s
         order by time desc
     """
 
@@ -51,7 +50,7 @@ def record_list():
     try:
         conn = get_connection()
         with conn.cursor() as cursor:
-            cursor.execute(sql, (open_id,))
+            cursor.execute(sql, (user_name,))
             rows = cursor.fetchall()
     except Exception as exc:
         return jsonify({

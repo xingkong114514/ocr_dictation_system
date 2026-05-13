@@ -3,9 +3,6 @@ import os.path
 from flask import Blueprint, jsonify, request
 from pypinyin import pinyin, lazy_pinyin, Style
 from database.db import get_connection
-from urllib.parse import quote
-from fastspeech.synthesize_all import gen
-import requests
 register_bp = Blueprint('register', __name__)
 
 APPID="wx19b13196eb152c7c"
