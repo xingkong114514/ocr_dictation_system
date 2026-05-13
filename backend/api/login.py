@@ -42,13 +42,14 @@ def login():
         "msg": "success",
         "openid": openid
     })
+
 @login_bp.route('/teacher', methods=['GET', 'POST'])
 def teacher_login():
     data = request.get_json(silent=True) or {}
-
     username = str(data.get("username", "")).strip()
     password = str(data.get("password", "")).strip()
     role = str(data.get("role", "")).strip()
+    print(f"username:{username}, password:{password}, role:{role}")
     if not username:
         return jsonify({
             "code": 400,
@@ -69,7 +70,7 @@ def teacher_login():
     try:
         conn = get_connection()
         with conn.cursor() as cursor:
-            cursor.execute(sql, (username,))
+            cursor.execute(sql,(username,))
             user = cursor.fetchone()
 
         if not user:
@@ -78,10 +79,11 @@ def teacher_login():
                 "msg": "用户名或密码错误"
             }), 200
 
-        db_username = user["user_name"]
-        db_password = user["password"]
-
-        if password != db_password:
+        db_username = user[0]
+        db_password = user[1]
+        print(f"db_username:{db_username}, db_password:{db_password}")
+        print(str(password) != str(db_password))
+        if str(password) != str(db_password):
             return jsonify({
                 "code": 401,
                 "msg": "用户名或密码错误"
