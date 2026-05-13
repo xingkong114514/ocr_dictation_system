@@ -62,7 +62,7 @@ def teacher_login():
         }), 400
     conn = None
     sql = """
-          SELECT user_name, password
+          SELECT user_name, password,real_name
           FROM users
           WHERE user_name = %s \
           """
@@ -81,6 +81,7 @@ def teacher_login():
 
         db_username = user[0]
         db_password = user[1]
+        db_real_name = user[2]
         print(f"db_username:{db_username}, db_password:{db_password}")
         print(str(password) != str(db_password))
         if str(password) != str(db_password):
@@ -94,7 +95,8 @@ def teacher_login():
             "msg": "登录成功",
             "data": {
                 "username": db_username,
-                "role": role
+                "role": role,
+                "real_name": db_real_name
             }
         }), 200
 
