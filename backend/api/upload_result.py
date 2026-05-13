@@ -22,11 +22,13 @@ def upload_result():
     unit_id = request.form.get("unit_id")
     grade_term = request.form.get("grade_term")
     open_id = request.form.get("openid")
+    user_name= request.form.get("user_name")
     items = request.form.get("items")
     dictation_payload=request.form.get("dictation_payload")
-    print(f"request.form: {request.form}")
-    print(f"items:{items}")
-    if dictation_payload=="":
+    #dictation_payload=None
+    # print(f"lesson_id:{lesson_id},unit_id:{unit_id},grade_term:{grade_term},open_id:{open_id},user_name:{user_name},items:{items},dictation_payload:{dictation_payload}")
+    print(dictation_payload is None)
+    if dictation_payload is None:
         if grade_term =="一上":
             grade_term = "1+"
         elif grade_term=="一下":
@@ -82,7 +84,7 @@ def upload_result():
     print(save_path)
     entry(save_path,img_name=save_name)
 
-    if dictation_payload == "":
+    if dictation_payload is None:
         sql = ''' \
               select word_no, word_text \
               from dictation_word \
@@ -123,14 +125,14 @@ def upload_result():
                 "text": text
             }
 
-    with open(os.path.join("uploads","result", save_name.split(".")[0]+".txt"), "r",encoding="utf-8") as f:
+    with open(os.path.join("uploads","result", save_name.split(".")[0]+".txt"), "r",encoding="gbk") as f:
         content=f.readlines()
     result=compare_content_with_unit_map("1我2地3你", unit_map)
     output=process(result)
     timestamp_ms = int(time.time() * 1000)
     print(timestamp_ms)
     chapter=f'{grade_term}.{unit_id}.{lesson_id}'
-    insert_into_record(timestamp_ms,open_id,output,chapter)
+    insert_into_record(timestamp_ms,open_id,user_name,output,chapter)
     return jsonify({
         "code": 200,
         "msg": "上传成功",
@@ -209,7 +211,7 @@ def process(result):
 
     return output
 
-def insert_into_record(timestamp_ms, open_id, output, chapter):
+def insert_into_record(timestamp_ms, open_id, user_name,output, chapter):
     """
     向 record 表插入一条记录
 
@@ -225,14 +227,14 @@ def insert_into_record(timestamp_ms, open_id, output, chapter):
     """
     conn = None
     sql = """
-        INSERT INTO record (time, open_id, result, chapter)
-        VALUES (%s, %s, %s, %s)
+        INSERT INTO record (time, open_id,user_name, result, chapter)
+        VALUES (%s, %s,%s, %s, %s)
     """
 
     try:
         conn = get_connection()
         with conn.cursor() as cursor:
-            cursor.execute(sql, (timestamp_ms, open_id, Json(output, dumps=lambda x: json.dumps(x, ensure_ascii=False)), chapter))
+            cursor.execute(sql, (timestamp_ms, open_id, user_name,Json(output, dumps=lambda x: json.dumps(x, ensure_ascii=False)), chapter))
         conn.commit()
         return True
     except Exception as exc:

@@ -11,6 +11,8 @@ from api.login import login_bp
 from api.record_api import record_bp
 from api.custom_dictation import custom_dictation_bp
 from api.register import register_bp
+from api.teacher import teacher_bp
+from api.parent import parent_bp
 def create_app():
     """
     Flask 应用工厂函数
@@ -33,6 +35,8 @@ def create_app():
     app.register_blueprint(login_bp, url_prefix='/api/login')
     app.register_blueprint(custom_dictation_bp, url_prefix='/api/custom_dictation')
     app.register_blueprint(register_bp, url_prefix='/api/register')
+    app.register_blueprint(teacher_bp, url_prefix='/api/teacher')
+    app.register_blueprint(parent_bp, url_prefix='/api/parent')
     # 健康检查接口（测试服务是否启动）
     @app.route('/')
     def index():

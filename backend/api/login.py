@@ -110,3 +110,71 @@ def teacher_login():
     finally:
         if conn is not None:
             conn.close()
+
+@login_bp.route('/parent', methods=['GET', 'POST'])
+def parent_login():
+    data = request.get_json(silent=True) or {}
+    username = str(data.get("username", "")).strip()
+    password = str(data.get("password", "")).strip()
+    role = str(data.get("role", "")).strip()
+    print(f"username:{username}, password:{password}, role:{role}")
+    if not username:
+        return jsonify({
+            "code": 400,
+            "msg": "用户名不能为空"
+        }), 400
+    if not password:
+        return jsonify({
+            "code": 400,
+            "msg": "密码不能为空"
+        }), 400
+    conn = None
+    sql = """
+          SELECT user_name, password,real_name
+          FROM users
+          WHERE user_name = %s \
+          """
+
+    try:
+        conn = get_connection()
+        with conn.cursor() as cursor:
+            cursor.execute(sql,(username,))
+            user = cursor.fetchone()
+
+        if not user:
+            return jsonify({
+                "code": 401,
+                "msg": "用户名或密码错误"
+            }), 200
+
+        db_username = user[0]
+        db_password = user[1]
+        db_real_name = user[2]
+        print(f"db_username:{db_username}, db_password:{db_password}")
+        print(str(password) != str(db_password))
+        if str(password) != str(db_password):
+            return jsonify({
+                "code": 401,
+                "msg": "用户名或密码错误"
+            }), 200
+
+        return jsonify({
+            "code": 200,
+            "msg": "登录成功",
+            "data": {
+                "username": db_username,
+                "role": role,
+                "real_name": db_real_name
+            }
+        }), 200
+
+    except Exception as exc:
+        print(f"login error: {exc}")
+        return jsonify({
+            "code": 500,
+            "msg": "服务器内部错误"
+        }), 500
+
+    finally:
+        if conn is not None:
+            conn.close()
