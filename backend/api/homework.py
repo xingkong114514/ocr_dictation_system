@@ -270,3 +270,68 @@ def get_homework_status():
     finally:
         if conn is not None:
             conn.close()
+
+@homework_bp.route('/parent_list', methods=['POST'])
+def get_parent_homework_list():
+    data = request.get_json(silent=True) or {}
+    student_name = str(data.get("student_name", "")).strip()
+
+    if not student_name:
+        return jsonify({
+            "code": 400,
+            "msg": "student_name不能为空"
+        }), 400
+
+    conn = None
+    sql = """
+        SELECT
+            sh.homework_id,
+            h.title,
+            h.content,
+            h.homework_type,
+            h.deadline,
+            sh.status,
+            sh.score,
+            sh.submitted_at
+        FROM student_homework sh
+        LEFT JOIN homework h
+            ON sh.homework_id = h.homework_id
+        WHERE sh.student_name = %s
+        ORDER BY h.homework_id DESC
+    """
+
+    try:
+        conn = get_connection()
+        with conn.cursor() as cursor:
+            cursor.execute(sql, (student_name,))
+            rows = cursor.fetchall()
+
+        homework_list = []
+        for row in rows:
+            homework_list.append({
+                "homework_id": row[0],
+                "title": row[1] or "",
+                "content": row[2] or "",
+                "homework_type": row[3] or "",
+                "deadline": row[4].strftime("%Y-%m-%d %H:%M:%S") if row[4] else "",
+                "status": row[5] or "pending",
+                "score": row[6],
+                "submitted_at": row[7].strftime("%Y-%m-%d %H:%M:%S") if row[7] else ""
+            })
+
+        return jsonify({
+            "code": 200,
+            "msg": "查询成功",
+            "data": homework_list
+        }), 200
+
+    except Exception as exc:
+        print(f"get_parent_homework_list error: {exc}")
+        return jsonify({
+            "code": 500,
+            "msg": "服务器内部错误"
+        }), 500
+
+    finally:
+        if conn is not None:
+            conn.close()

@@ -14,6 +14,7 @@ from api.register import register_bp
 from api.teacher import teacher_bp
 from api.parent import parent_bp
 from api.homework import homework_bp
+from api.wrong_word import wrong_word_bp
 def create_app():
     """
     Flask 应用工厂函数
@@ -39,6 +40,7 @@ def create_app():
     app.register_blueprint(teacher_bp, url_prefix='/api/teacher')
     app.register_blueprint(parent_bp, url_prefix='/api/parent')
     app.register_blueprint(homework_bp, url_prefix='/api/homework')
+    app.register_blueprint(wrong_word_bp, url_prefix='/api/wrong_word')
     # 健康检查接口（测试服务是否启动）
     @app.route('/')
     def index():

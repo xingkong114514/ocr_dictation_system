@@ -16,19 +16,43 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 upload_result_bp = Blueprint('upload_result', __name__)
 @upload_result_bp.route("/upload_result", methods=["GET","POST"])
 def upload_result():
+    source = request.form.get("source", "").strip()
+    if source == "homework":
+        file = request.files.get("file")
+        open_id = request.form.get("openid")
+        user_name = request.form.get("user_name")
+        lesson_id=None
+        unit_id=None
+        grade_term=None
+        items = request.form.get("items")
+        dictation_payload = request.form.get("dictation_payload")
+        custom_items = json.loads(dictation_payload)['custom_items']
+        homework_id = json.loads(dictation_payload)['unit_id'].split("-")[1]
+        print(f"homework_id:{homework_id},source:{source},lesson_id:{lesson_id},unit_id:{unit_id},grade_term:{grade_term},open_id:{open_id},user_name:{user_name},items:{items},dictation_payload:{dictation_payload}")
+    elif source == "custom": # homework和custom都有dictation_payload
+        file = request.files.get("file")
+        open_id = request.form.get("openid")
+        user_name = request.form.get("user_name")
+        lesson_id = request.form.get("lesson_id")
+        unit_id = request.form.get("unit_id")
+        grade_term = request.form.get("grade_term")
+        items = request.form.get("items")
+        dictation_payload = request.form.get("dictation_payload")
+        print(f"source:{source},lesson_id:{lesson_id},unit_id:{unit_id},grade_term:{grade_term},open_id:{open_id},user_name:{user_name},items:{items},dictation_payload:{dictation_payload}")
+    else:# 课程听写 source为lesson且dictation_payload为None
+        file = request.files.get("file")
+        open_id = request.form.get("openid")
+        user_name = request.form.get("user_name")
+        lesson_id = request.form.get("lesson_id")
+        unit_id = request.form.get("unit_id")
+        grade_term = request.form.get("grade_term")
+        items = request.form.get("items")
+        dictation_payload = request.form.get("dictation_payload")
+        print(f"source:{source},lesson_id:{lesson_id},unit_id:{unit_id},grade_term:{grade_term},open_id:{open_id},user_name:{user_name},items:{items},dictation_payload:{dictation_payload}")
 
-    file = request.files.get("file")
-    lesson_id = request.form.get("lesson_id")
-    unit_id = request.form.get("unit_id")
-    grade_term = request.form.get("grade_term")
-    open_id = request.form.get("openid")
-    user_name= request.form.get("user_name")
-    items = request.form.get("items")
-    dictation_payload=request.form.get("dictation_payload")
     #dictation_payload=None
-    # print(f"lesson_id:{lesson_id},unit_id:{unit_id},grade_term:{grade_term},open_id:{open_id},user_name:{user_name},items:{items},dictation_payload:{dictation_payload}")
     print(dictation_payload is None)
-    if dictation_payload is None:
+    if source=="lesson":
         if grade_term =="一上":
             grade_term = "1+"
         elif grade_term=="一下":
@@ -132,7 +156,11 @@ def upload_result():
     timestamp_ms = int(time.time() * 1000)
     print(timestamp_ms)
     chapter=f'{grade_term}.{unit_id}.{lesson_id}'
-    insert_into_record(timestamp_ms,open_id,user_name,output,chapter)
+    if source=="homework":
+        insert_into_record(timestamp_ms,open_id,user_name,output,chapter,source,homework_id)
+        update_score(timestamp_ms,user_name,result,homework_id)
+    else:
+        insert_into_record(timestamp_ms, open_id, user_name, output, chapter,source,-1)
     return jsonify({
         "code": 200,
         "msg": "上传成功",
@@ -211,10 +239,9 @@ def process(result):
 
     return output
 
-def insert_into_record(timestamp_ms, open_id, user_name,output, chapter):
+def insert_into_record(timestamp_ms, open_id, user_name,output, chapter,source,homework_id):
     """
     向 record 表插入一条记录
-
     参数:
         year: int
         month: int
@@ -227,14 +254,14 @@ def insert_into_record(timestamp_ms, open_id, user_name,output, chapter):
     """
     conn = None
     sql = """
-        INSERT INTO record (time, open_id,user_name, result, chapter)
-        VALUES (%s, %s,%s, %s, %s)
+        INSERT INTO record (time, open_id,user_name, result, chapter,source,homework_id)
+        VALUES (%s, %s,%s, %s, %s,%s,%s)
     """
 
     try:
         conn = get_connection()
         with conn.cursor() as cursor:
-            cursor.execute(sql, (timestamp_ms, open_id, user_name,Json(output, dumps=lambda x: json.dumps(x, ensure_ascii=False)), chapter))
+            cursor.execute(sql, (timestamp_ms, open_id, user_name,Json(output, dumps=lambda x: json.dumps(x, ensure_ascii=False)), chapter,source,homework_id))
         conn.commit()
         return True
     except Exception as exc:
@@ -244,4 +271,40 @@ def insert_into_record(timestamp_ms, open_id, user_name,output, chapter):
         return False
     finally:
         if conn is not None:
+            conn.close()
+
+def update_score(timestamp_ms, user_name, result, homework_id):
+    count=0
+    score=0
+    for key, value in result.items():
+        count+=1
+        if value==1:
+            score+=1
+    score=(score/count)*100
+    update_score_sql = """
+                       UPDATE student_homework
+                       SET score  = %s,
+                           status = '已完成',
+                           submitted_at=CURRENT_TIMESTAMP
+                       WHERE homework_id = %s \
+                         AND student_name = %s \
+                       """
+    try:
+        conn = get_connection()
+        with conn.cursor() as cursor:
+            cursor.execute(update_score_sql, (score,homework_id, user_name))
+        conn.commit()
+        return jsonify({
+            "code": 200,
+            "msg": "分数更新成功"
+        })
+    except Exception as exc:
+        conn.rollback()
+        print(f"update score error: {exc}")
+        return jsonify({
+            "code": 500,
+            "msg": "分数更新失败"
+        }), 500
+    finally:
+        if conn:
             conn.close()

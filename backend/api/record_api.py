@@ -39,7 +39,7 @@ def record_list():
         }), 400
 
     sql = """
-        select time, result, chapter
+        select time, result, chapter,source
         from record
         where user_name = %s
         order by time desc
@@ -62,7 +62,7 @@ def record_list():
             conn.close()
 
     data = []
-    for time_value, result, chapter in rows:
+    for time_value, result, chapter,source in rows:
         chapter=chapter.split(".")
         grade_term=chapter[0]
         unit_id=chapter[1]
@@ -93,6 +93,9 @@ def record_list():
             grade_term = "六下"
         else:
             grade_term ="用户自定义"
+        if source=="homework":
+            grade_term ="教师作业"
+
         data.append({
             "time": format_timestamp(time_value),
             "result": result,
