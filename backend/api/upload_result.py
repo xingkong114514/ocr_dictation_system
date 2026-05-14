@@ -97,7 +97,15 @@ def upload_result():
         }), 400
 
     original_name = file.filename
-    safe_name = secure_filename(original_name)
+    from datetime import datetime
+    now = datetime.now()
+    year = now.year
+    month = now.month
+    day = now.day
+    hour = now.hour
+    minute = now.minute
+    second = now.second
+    safe_name = f"{year}_{month}_{day}_{hour}_{minute}_{second}.jpg"
 
     if not safe_name:
         safe_name = "upload_image.jpg"
@@ -151,7 +159,7 @@ def upload_result():
 
     with open(os.path.join("uploads","result", save_name.split(".")[0]+".txt"), "r",encoding="gbk") as f:
         content=f.readlines()
-    result=compare_content_with_unit_map("1我2地3你", unit_map)
+    result=compare_content_with_unit_map(content, unit_map)
     output=process(result)
     timestamp_ms = int(time.time() * 1000)
     print(timestamp_ms)

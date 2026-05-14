@@ -3,7 +3,7 @@ from math import *
 import numpy as np
 from ocr.detect.ctpn_predict import get_det_boxes
 from ocr.recognize.crnn_recognizer import PytorchOcr
-recognizer = PytorchOcr()
+recognizer = PytorchOcr(model_path="ocr/checkpoints/v3_crnn_ep108_0.9273.pth")
 
 def dis(image):
     cv2.imshow('image', image)

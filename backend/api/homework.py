@@ -314,7 +314,7 @@ def get_parent_homework_list():
                 "content": row[2] or "",
                 "homework_type": row[3] or "",
                 "deadline": row[4].strftime("%Y-%m-%d %H:%M:%S") if row[4] else "",
-                "status": row[5] or "pending",
+                "status": row[5] or "未完成",
                 "score": row[6],
                 "submitted_at": row[7].strftime("%Y-%m-%d %H:%M:%S") if row[7] else ""
             })
