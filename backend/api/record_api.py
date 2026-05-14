@@ -95,6 +95,8 @@ def record_list():
             grade_term ="用户自定义"
         if source=="homework":
             grade_term ="教师作业"
+        if source=="wrong":
+            grade_term = "错词本"
 
         data.append({
             "time": format_timestamp(time_value),
