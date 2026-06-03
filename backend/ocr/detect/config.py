@@ -1,12 +1,10 @@
 import os
-
-# base_dir = 'path to dataset base dir'
 base_dir = './images'
 img_dir = os.path.join(base_dir, 'VOC2007_text_detection/JPEGImages')
 xml_dir = os.path.join(base_dir, 'VOC2007_text_detection/Annotations')
 
-icdar17_mlt_img_dir = '/home/data2/egz/ICDAR2017_MLT/train/'
-icdar17_mlt_gt_dir = '/home/data2/egz/ICDAR2017_MLT/train_gt/'
+icdar17_mlt_img_dir = 'data2/egz/ICDAR2017_MLT/train/'
+icdar17_mlt_gt_dir = 'data2/egz/ICDAR2017_MLT/train_gt/'
 num_workers = 2
 pretrained_weights = 'checkpoints/base.pth.tar'
 

@@ -9,11 +9,7 @@ APPID="wx19b13196eb152c7c"
 SECRET="283ae3b1ecbf3a0fd9c277edb592c516"
 @register_bp.route('/register', methods=['GET', 'POST'])
 def register():
-    """
-    0:admin
-    1:teacher
-    2:student
-    """
+
     data = request.get_json(silent=True) or {}
     username = str(data.get("username", "")).strip()
     password = str(data.get("password", "")).strip()

@@ -7,9 +7,7 @@ list_bp = Blueprint('list', __name__)
 
 @list_bp.route('/list', methods=['GET', 'POST'])
 def list_texts():
-    """
-    返回指定年级册次下的单元、课文和每课词数。
-    """
+
     payload = request.get_json(silent=True) or {}
     grade_term = payload.get('grade_term') or request.args.get('grade_term')
     print(grade_term)
@@ -66,9 +64,9 @@ def list_texts():
         conn = get_connection()
         with conn.cursor() as cursor:
             cursor.execute(sql, (grade_term,))
-            # cursor.execute(sqltest)
+
             rows = cursor.fetchall()
-            # rows = cursor.fetchall()
+
             print(rows)
     except Exception as exc:
         return jsonify({

@@ -1,41 +1,25 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-"""
-从 txt 导入听写词语到 PostgreSQL
-每行格式：grade_term+unit.section.num.word
-示例：1+8.4.9.喝水.
-含义：一年级上册，第8单元，第4课，第9个词“喝水”
-"""
 
 import re
 import sys
 import psycopg2
-
-# ===== 你只改这里（全部小写变量）=====
 db_host = "127.0.0.1"
 db_port = 5432
 db_name = "ocr"
 db_user = "postgres"
 db_password = "123456"
 txt_file = r"D:/ocr_dictation_system/backend/oneon_.txt"
-# =====================================
-
-# 解析：1+8.4.9.喝水.
 line_re = re.compile(r"^\s*([1-6][+-])(\d+)\.(\d+)\.(\d+)\.(.+?)\s*$")
-
 
 def parse_line(line: str, line_no: int):
     m = line_re.match(line)
     if not m:
         raise ValueError(f"第 {line_no} 行格式错误：{line.strip()}，应为 1+8.4.9.喝水.")
-    grade_term = m.group(1)       # 1+ / 1- / 2+ ...
-    unit_no = int(m.group(2))     # 8
-    section_no = int(m.group(3))  # 4
-    word_no = int(m.group(4))     # 9
+    grade_term = m.group(1)
+    unit_no = int(m.group(2))
+    section_no = int(m.group(3))
+    word_no = int(m.group(4))
     word_text = m.group(5).strip()
 
-    # 如果行末有格式点号，去掉一个
     if word_text.endswith("."):
         word_text = word_text[:-1].strip()
 
@@ -146,8 +130,6 @@ def main():
             user=db_user,
             password=db_password,
         )
-        # create_tables(conn)
-        # import_txt(conn, txt_file)
         myimport(conn,txt_file)
     except Exception as e:
         print(f"导入失败：{e}", file=sys.stderr)

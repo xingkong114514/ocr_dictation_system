@@ -4,12 +4,9 @@ from database.db import get_connection
 
 wrong_word_bp = Blueprint('wrong_word', __name__)
 
-
 @wrong_word_bp.route('/wrong_word', methods=['POST'])
 def wrong_word():
-    """
-    返回指定课文听写内容
-    """
+
     data = request.get_json(silent=True) or {}
     open_id = str(data.get("open_id", "")).strip()
     user_name = str(data.get("user_name", "")).strip()

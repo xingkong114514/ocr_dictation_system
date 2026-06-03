@@ -8,7 +8,6 @@ from fastspeech.text.symbols import symbols
 
 
 def get_sinusoid_encoding_table(n_position, d_hid, padding_idx=None):
-    """ Sinusoid position encoding table """
 
     def cal_angle(position, hid_idx):
         return position / np.power(10000, 2 * (hid_idx // 2) / d_hid)
@@ -20,18 +19,18 @@ def get_sinusoid_encoding_table(n_position, d_hid, padding_idx=None):
         [get_posi_angle_vec(pos_i) for pos_i in range(n_position)]
     )
 
-    sinusoid_table[:, 0::2] = np.sin(sinusoid_table[:, 0::2])  # dim 2i
-    sinusoid_table[:, 1::2] = np.cos(sinusoid_table[:, 1::2])  # dim 2i+1
+    sinusoid_table[:, 0::2] = np.sin(sinusoid_table[:, 0::2])
+    sinusoid_table[:, 1::2] = np.cos(sinusoid_table[:, 1::2])
 
     if padding_idx is not None:
-        # zero vector for padding dimension
+
         sinusoid_table[padding_idx] = 0.0
 
     return torch.FloatTensor(sinusoid_table)
 
 
 class Encoder(nn.Module):
-    """ Encoder """
+
 
     def __init__(self, config):
         super(Encoder, self).__init__()
@@ -75,10 +74,10 @@ class Encoder(nn.Module):
         enc_slf_attn_list = []
         batch_size, max_len = src_seq.shape[0], src_seq.shape[1]
 
-        # -- Prepare masks
+
         slf_attn_mask = mask.unsqueeze(1).expand(-1, max_len, -1)
 
-        # -- Forward
+
         if not self.training and src_seq.shape[1] > self.max_seq_len:
             enc_output = self.src_word_emb(src_seq) + get_sinusoid_encoding_table(
                 src_seq.shape[1], self.d_model
@@ -91,7 +90,7 @@ class Encoder(nn.Module):
             ].expand(batch_size, -1, -1)
 
         if char_vecs is not None:
-            # print('----------- true')
+
             enc_output += char_vecs
 
         for enc_layer in self.layer_stack:
@@ -105,7 +104,7 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    """ Decoder """
+
 
     def __init__(self, config):
         super(Decoder, self).__init__()
@@ -145,9 +144,9 @@ class Decoder(nn.Module):
         dec_slf_attn_list = []
         batch_size, max_len = enc_seq.shape[0], enc_seq.shape[1]
 
-        # -- Forward
+
         if not self.training and enc_seq.shape[1] > self.max_seq_len:
-            # -- Prepare masks
+
             slf_attn_mask = mask.unsqueeze(1).expand(-1, max_len, -1)
             dec_output = enc_seq + get_sinusoid_encoding_table(
                 enc_seq.shape[1], self.d_model
@@ -157,7 +156,7 @@ class Decoder(nn.Module):
         else:
             max_len = min(max_len, self.max_seq_len)
 
-            # -- Prepare masks
+
             slf_attn_mask = mask.unsqueeze(1).expand(-1, max_len, -1)
             dec_output = enc_seq[:, :max_len, :] + self.position_enc[
                 :, :max_len, :

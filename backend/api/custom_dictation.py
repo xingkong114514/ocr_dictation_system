@@ -12,9 +12,7 @@ custom_dictation_bp = Blueprint('custom_dictation', __name__)
 
 @custom_dictation_bp.route('/custom_dictation', methods=['GET', 'POST'])
 def custom_dictation():
-    """
-    返回指定课文听写内容
-    """
+
     data = request.get_json()
     open_id = data.get("open_id", "")
     content = data.get("content", "")

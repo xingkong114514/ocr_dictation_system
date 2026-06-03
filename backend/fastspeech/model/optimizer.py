@@ -3,7 +3,7 @@ import numpy as np
 
 
 class ScheduledOptim:
-    """ A simple wrapper class for learning rate scheduling """
+
 
     def __init__(self, model, train_config, model_config, current_step):
 
@@ -24,7 +24,7 @@ class ScheduledOptim:
         self._optimizer.step()
 
     def zero_grad(self):
-        # print(self.init_lr)
+
         self._optimizer.zero_grad()
 
     def load_state_dict(self, path):
@@ -43,7 +43,7 @@ class ScheduledOptim:
         return lr
 
     def _update_learning_rate(self):
-        """ Learning rate scheduling per step """
+
         self.current_step += 1
         lr = self.init_lr * self._get_lr_scale()
 

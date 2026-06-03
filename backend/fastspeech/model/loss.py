@@ -3,7 +3,7 @@ import torch.nn as nn
 
 
 class FastSpeech2Loss(nn.Module):
-    """ FastSpeech2 Loss """
+
 
     def __init__(self, preprocess_config, model_config):
         super(FastSpeech2Loss, self).__init__()
@@ -15,7 +15,7 @@ class FastSpeech2Loss(nn.Module):
         ]
         self.mse_loss = nn.MSELoss()
         self.mae_loss = nn.L1Loss()
-        # prosody loss
+
         self.bce_loss = nn.BCEWithLogitsLoss()
 
     def forward(self, inputs, predictions):
@@ -26,8 +26,8 @@ class FastSpeech2Loss(nn.Module):
             pitch_targets,
             energy_targets,
             duration_targets,
-            char_vecs,  # add char vecs
-            prosody_targets,  # add prosody
+            char_vecs,
+            prosody_targets,
         ) = inputs[6:]
         (
             mel_predictions,
@@ -40,7 +40,7 @@ class FastSpeech2Loss(nn.Module):
             mel_masks,
             _,
             _,
-            prosody_predictions,  # add prosody
+            prosody_predictions,
         ) = predictions
         src_masks = ~src_masks
         mel_masks = ~mel_masks
@@ -83,7 +83,7 @@ class FastSpeech2Loss(nn.Module):
         energy_loss = self.mse_loss(energy_predictions, energy_targets)
         duration_loss = self.mse_loss(log_duration_predictions, log_duration_targets)
 
-        # add prosody loss
+
         prosody_loss = self.bce_loss(prosody_predictions, prosody_targets)
 
         total_loss = (

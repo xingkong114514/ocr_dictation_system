@@ -1,4 +1,4 @@
-""" from https://github.com/keithito/tacotron """
+
 
 import re
 
@@ -94,7 +94,6 @@ _valid_symbol_set = set(valid_symbols)
 
 
 class CMUDict:
-    """Thin wrapper around CMUDict data. http://www.speech.cs.cmu.edu/cgi-bin/cmudict"""
 
     def __init__(self, file_or_path, keep_ambiguous=True):
         if isinstance(file_or_path, str):
@@ -110,7 +109,6 @@ class CMUDict:
         return len(self._entries)
 
     def lookup(self, word):
-        """Returns list of ARPAbet pronunciations of the given word."""
         return self._entries.get(word.upper())
 
 

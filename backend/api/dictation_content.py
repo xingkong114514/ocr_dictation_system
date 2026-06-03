@@ -11,9 +11,7 @@ dictation_content_bp = Blueprint('dictation_content', __name__)
 
 @dictation_content_bp.route('/dictation_content', methods=['GET', 'POST'])
 def get_dictation_content():
-    """
-    返回指定课文听写内容
-    """
+
     payload = request.get_json(silent=True) or {}
     unit_id=payload.get('unit_id') or request.args.get('unit_id')
     lesson_id=payload.get('lesson_id') or request.args.get('lesson_id')

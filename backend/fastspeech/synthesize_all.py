@@ -4,7 +4,6 @@ import yaml
 import numpy as np
 from pypinyin import pinyin, Style, load_phrases_dict
 from transformers import BertTokenizer
-
 from fastspeech.utils.model import get_model, get_vocoder
 from fastspeech.utils.tools import to_device, synth_samples
 from fastspeech.text import text_to_sequence
@@ -15,7 +14,7 @@ from fastspeech.transformer.ProsodyModel import CharEmbedding
 import os
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f'####### device: {device} #######')
+
 
 
 def read_lexicon(lex_path):
@@ -185,11 +184,11 @@ def preprocess_mandarin(text, preprocess_config, char_model, tokenizer):
     text_list = word_segment(text, phrase_phone_dict, min_len=3)
     print(text_list)
 
-    # 改进处理
-    pinyins = correct_pinyin_special(text_list, phrase_phone_dict)  # 从biaobei字典中获取拼音
-    pinyins = _get_pinyins(pinyins, lexicon)  # 从pypinyin中获取拼音
-    pinyins = correct_pinyin_tone3(pinyins)  # 声调校正
-    # print("pinyin: ", pinyins)
+
+    pinyins = correct_pinyin_special(text_list, phrase_phone_dict)
+    pinyins = _get_pinyins(pinyins, lexicon)
+    pinyins = correct_pinyin_tone3(pinyins)
+
 
     length = []
     for p in pinyins:
@@ -242,7 +241,7 @@ def synthesize(model, configs, vocoder, batchs, chars_embeds, control_values, re
             char_embeds = None
             print('++++ char_embeds is none... ++++ ')
         with torch.no_grad():
-            # Forward
+
             output = model(
                 *(batch[2:]),
                 char_vecs=char_embeds,
@@ -267,7 +266,7 @@ def synthesize_all(text_file, result_path):
     energy_control = 1.0
     duration_control = 1.0
 
-    # Read Config
+
     preprocess_config_path = "./config/AISHELL3/preprocess.yaml"
     model_config_path = "./config/AISHELL3/model.yaml"
     train_config_path = "./config/AISHELL3/train.yaml"
@@ -276,16 +275,16 @@ def synthesize_all(text_file, result_path):
     train_config = yaml.load(open(train_config_path, "r"), Loader=yaml.FullLoader)
     configs = (preprocess_config, model_config, train_config)
 
-    # Result Path
+
     os.makedirs(result_path, exist_ok=True)
 
-    # Get model
+
     model = get_model(restore_step, configs, device, train=False)
 
-    # Load vocoder
+
     vocoder = get_vocoder(model_config, device)
 
-    # Get char model, char tokenizer
+
     char_model = CharEmbedding(preprocess_config['path']['char_model_path'])
     char_model.to(device)
     char_model.load_state_dict(
@@ -296,14 +295,14 @@ def synthesize_all(text_file, result_path):
     char_model.eval()
     char_tokenizer = BertTokenizer.from_pretrained(preprocess_config['path']['char_model_path'])
 
-    # Read file and Preprocess texts
+
     with open(text_file, 'r', encoding='utf8') as f:
         for line in f:
             sample = line.strip().split()
             ids, raw_texts = sample[0], ''.join(sample[1:])
             speakers = np.array([0])
             print(ids)
-            # 整句合成
+
             phones_seq, char_embeds = preprocess_mandarin(raw_texts, preprocess_config, char_model, char_tokenizer)
             texts = np.array([phones_seq])
             char_embeds = np.array([char_embeds]) if char_embeds is not None else char_embeds
@@ -315,7 +314,6 @@ def synthesize_all(text_file, result_path):
             synthesize(model, configs, vocoder, batchs, chars_embeds, control_values, result_path)
 
 
-# 构建音频合成类，为服务做准备
 class SpeechSynthesis(object):
     def __init__(self, config_dir):
         print("loading built-in configs...")
@@ -365,7 +363,6 @@ class SpeechSynthesis(object):
             raw_texts = re.sub(r"\s+", "", text.strip())
             speakers = np.array([0])
 
-            # 整句合成
             print('starting text processing')
             phones_seq, char_embeds = preprocess_mandarin(raw_texts,
                                                           self.preprocess_config,
@@ -398,24 +395,12 @@ def gen(text):
         os.rename("./result/tmp.wav", f"./result/{text}.wav")
 
 if __name__ == "__main__":
-    # 从文件中批量合成语音
-    # parser = argparse.ArgumentParser()
-    #
-    # parser.add_argument("--text_file", type=str, required=False, default="",
-    #                     help="text input path")
-    # parser.add_argument("--output_dir", type=str, required=False, default="",
-    #                     help="wav output path")
-    # args = parser.parse_args()
-    #
-    # synthesize_all(args.text_file, args.output_dir)
 
-    # 单句语音合成
     tts = SpeechSynthesis('./config/AISHELL3')
     while True:
         text = input("请输入文本：")
         print(tts.text2speech(text,save_path="./result"))
         os.rename("./result/tmp.wav", f"./result/{text}.wav")
-
 
 
     pass

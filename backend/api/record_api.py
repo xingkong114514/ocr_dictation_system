@@ -10,9 +10,7 @@ record_bp = Blueprint('record', __name__)
 
 
 def format_timestamp(time_value):
-    """
-    兼容秒级和毫秒级时间戳，返回 YYYY-MM-DD HH:MM:SS
-    """
+
     if time_value is None:
         return ""
 
@@ -32,14 +30,10 @@ def record_list():
     open_id = payload.get('open_id') or request.args.get('open_id')
     user_name= payload.get('user_name')
     print(f"open_id:{open_id}, user_name:{user_name}")
-    if not open_id:
-        return jsonify({
-            "code": 400,
-            "msg": "open_id is required"
-        }), 400
+
 
     sql = """
-        select time, result, chapter,source
+        select time, result,chapter,source
         from record
         where user_name = %s
         order by time desc

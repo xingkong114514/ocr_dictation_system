@@ -22,7 +22,6 @@ saved_model_dir = 'crnn_models'
 saved_model_prefix = 'CRNN-'
 use_log = False
 remove_blank = False
-
 experiment = None
 displayInterval = 500
 n_test_disp = 10

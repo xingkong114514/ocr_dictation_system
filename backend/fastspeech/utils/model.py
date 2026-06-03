@@ -13,7 +13,7 @@ def get_model(restore_step, configs, device, train=False):
     model = FastSpeech2(preprocess_config, model_config).to(device)
     if train_config["path"]["ckpt_path"]:
         ckpt_path = train_config["path"]["ckpt_path"]
-        # ckpt = torch.load(ckpt_path, map_location=device)["model"]
+
         ckpt = torch.load(ckpt_path, map_location=device,weights_only=False)["model"]
         print(f'loading model from `{ckpt_path}`...')
 

@@ -1,27 +1,8 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-"""
-课程目录 txt 导入 PostgreSQL
-
-txt 每行格式：
-grade_term-unit_no-lesson_no-word_count-lesson_title
-
-示例：
-1+-1-2-20-金木水火土
-1+-3-6-2-语文园地三
-1--1-1-15-春夏秋冬
-
-说明：
-1+ 表示一年级上册
-1- 表示一年级下册
-"""
 
 import re
 import sys
 import psycopg2
 
-# ===== 你只改这里（全部小写变量）=====
 db_host = "127.0.0.1"
 db_port = 5432
 db_name = "ocr"

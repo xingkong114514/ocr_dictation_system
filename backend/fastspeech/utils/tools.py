@@ -17,7 +17,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def to_device(data, device):
-    if len(data) == 14:  # 12
+    if len(data) == 14:
         (
             ids,
             raw_texts,
@@ -31,8 +31,8 @@ def to_device(data, device):
             pitches,
             energies,
             durations,
-            char_vecs, # add char vecs
-            prosodys,  # add prosody
+            char_vecs,
+            prosodys,
         ) = data
 
         speakers = torch.from_numpy(speakers).long().to(device)

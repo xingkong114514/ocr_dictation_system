@@ -1,5 +1,4 @@
 import torch.nn as nn
-# import torchvision.models as models
 import torch, os
 from PIL import Image
 import cv2
@@ -10,7 +9,6 @@ import random
 from ocr.recognize.crnn import CRNN
 from ocr.recognize import config
 
-# copy from mydataset
 class resizeNormalize(object):
     def __init__(self, size, interpolation=Image.LANCZOS, is_test=True):
         self.size = size
@@ -39,20 +37,19 @@ class resizeNormalize(object):
             img = tmp
         return img
 
-# copy from utils
+
 class strLabelConverter(object):
     def __init__(self, alphabet, ignore_case=False):
         self._ignore_case = ignore_case
         if self._ignore_case:
             alphabet = alphabet.lower()
-        self.alphabet = alphabet + '_'  # for `-1` index
+        self.alphabet = alphabet + '_'
 
         self.dict = {}
         for i, char in enumerate(alphabet):
-            # NOTE: 0 is reserved for 'blank' required by wrap_ctc
+
             self.dict[char] = i + 1
 
-    # print(self.dict)
     def encode(self, text):
         length = []
         result = []
@@ -82,7 +79,6 @@ class strLabelConverter(object):
                         char_list.append(self.alphabet[t[i] - 1])
                 return ''.join(char_list)
         else:
-            # batch mode
             assert t.numel() == length.sum(), "texts with length: {} does not match declared length: {}".format(
                 t.numel(), length.sum())
             texts = []
@@ -95,12 +91,11 @@ class strLabelConverter(object):
                 index += l
             return texts
 
-# recognize api
+
 class PytorchOcr():
     def __init__(self, model_path='ocr/checkpoints/v3_crnn_ep91_0.5550.pth'):
         alphabet_unicode = config.alphabet_v2
         self.alphabet = ''.join([chr(uni) for uni in alphabet_unicode])
-        # print(len(self.alphabet))
         self.nclass = len(self.alphabet) + 1
         self.model = CRNN(config.imgH, 1, self.nclass, 256)
         self.cuda = False
@@ -109,9 +104,7 @@ class PytorchOcr():
             self.model.cuda()
             checkpoint = torch.load(model_path)
             self.model.load_state_dict(checkpoint['model_state_dict'])
-            # self.model.load_state_dict({k.replace('module.', ''): v for k, v in torch.load(model_path).items()})
         else:
-            # self.model = nn.DataParallel(self.model)
             self.model.load_state_dict(torch.load(model_path, map_location='cpu'))
         self.model.eval()
         self.converter = strLabelConverter(self.alphabet)

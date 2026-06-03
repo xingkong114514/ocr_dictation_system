@@ -29,7 +29,7 @@ def upload_result():
         custom_items = json.loads(dictation_payload)['custom_items']
         homework_id = json.loads(dictation_payload)['unit_id'].split("-")[1]
         print(f"homework_id:{homework_id},source:{source},lesson_id:{lesson_id},unit_id:{unit_id},grade_term:{grade_term},open_id:{open_id},user_name:{user_name},items:{items},dictation_payload:{dictation_payload}")
-    elif source == "custom": # homework和custom都有dictation_payload
+    elif source == "custom":
         file = request.files.get("file")
         open_id = request.form.get("openid")
         user_name = request.form.get("user_name")
@@ -39,7 +39,7 @@ def upload_result():
         items = request.form.get("items")
         dictation_payload = request.form.get("dictation_payload")
         print(f"source:{source},lesson_id:{lesson_id},unit_id:{unit_id},grade_term:{grade_term},open_id:{open_id},user_name:{user_name},items:{items},dictation_payload:{dictation_payload}")
-    else:# 课程听写 source为lesson且dictation_payload为None
+    else:
         file = request.files.get("file")
         open_id = request.form.get("openid")
         user_name = request.form.get("user_name")
@@ -50,7 +50,6 @@ def upload_result():
         dictation_payload = request.form.get("dictation_payload")
         print(f"source:{source},lesson_id:{lesson_id},unit_id:{unit_id},grade_term:{grade_term},open_id:{open_id},user_name:{user_name},items:{items},dictation_payload:{dictation_payload}")
 
-    #dictation_payload=None
     print(dictation_payload is None)
     if source=="lesson":
         if grade_term =="一上":
@@ -77,8 +76,7 @@ def upload_result():
             grade_term = "6+"
         else:
             grade_term = "6-"
-        # items=request.form.get("items")
-        # print(items)
+
     else:
         lesson_id = -1
         unit_id = -1
@@ -183,29 +181,7 @@ def upload_result():
     })
 
 def compare_content_with_unit_map(content, unit_map):
-    """
-    content 中的识别结果与 unit_map 中的答案做匹配
 
-    参数:
-        content: str
-            后端文字识别结果，例如 "天地你他"
-        unit_map: dict
-            标准答案，例如:
-            {
-                0: {'id': 1, 'text': '天'},
-                1: {'id': 2, 'text': '地'},
-                2: {'id': 3, 'text': '人'},
-                3: {'id': 4, 'text': '你'},
-                4: {'id': 5, 'text': '我'},
-                5: {'id': 6, 'text': '他'}
-            }
-    返回:
-        dict，包含:
-        - matched_strings: 匹配成功的字符串列表
-        - matched_count: 匹配成功数量
-        - unmatched_strings: 匹配失败的字符串列表
-        - unmatched_count: 匹配失败数量
-    """
 
     matched_strings = []
     unmatched_strings = []
@@ -228,15 +204,7 @@ def compare_content_with_unit_map(content, unit_map):
     }
 
 def process(result):
-    """
-    将 compare_content_with_unit_map 的结果转换为:
-    {
-        "日": 1,
-        "月": 1,
-        "照": 0
-    }
-    其中 1 表示匹配成功，0 表示未匹配
-    """
+
     output = {}
 
     for text in result.get('matched_strings', []):
@@ -248,18 +216,7 @@ def process(result):
     return output
 
 def insert_into_record(timestamp_ms, open_id, user_name,output, chapter,source,homework_id):
-    """
-    向 record 表插入一条记录
-    参数:
-        year: int
-        month: int
-        day: int
-        open_id: str
-        output: dict
-            例如 {"日": 1, "月": 1, "照": 0}
-        chapter: str
-            例如 "1+.1.2"
-    """
+
     conn = None
     sql = """
         INSERT INTO record (time, open_id,user_name, result, chapter,source,homework_id)

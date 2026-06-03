@@ -21,7 +21,6 @@ def entry(img_path,img_name):
     print(txt_file)
     txt_f = open(txt_file, 'w')
     Image.fromarray(image_framed).save(output_file)
-    # print("Mission complete, it took {:.3f}s".format(time.time() - t))
     print("\nRecognition Result:\n")
     for key in result:
         print(result[key][1])

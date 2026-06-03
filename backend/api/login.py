@@ -12,9 +12,7 @@ APPID="wx19b13196eb152c7c"
 SECRET="283ae3b1ecbf3a0fd9c277edb592c516"
 @login_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    """
-    返回指定课文听写内容
-    """
+
     data = request.get_json(silent=True) or {}
     code = data.get("code")
     print(f"code:{code}")

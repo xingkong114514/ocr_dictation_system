@@ -1,14 +1,9 @@
-''' 
-_*_ coding: utf-8 _*_
-Date: 2022/2/4
-Author: 
-Intent:
-'''
+
 
 from transformers import BertModel, BertConfig, BertTokenizer
 import torch.nn as nn
 
-# 加入prosody微调后的char enbedding
+
 class CharEmbedding(nn.Module):
     def __init__(self, model_dir):
         super().__init__()

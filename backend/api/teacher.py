@@ -5,9 +5,7 @@ import requests
 teacher_bp = Blueprint('teacher', __name__)
 @teacher_bp.route('/classes', methods=['POST'])
 def get_teacher_classes():
-    """
-    查老师有哪些班级
-    """
+
     data = request.get_json(silent=True) or {}
     teacher_name = str(data.get("teacher_name", "")).strip()
     if not teacher_name:

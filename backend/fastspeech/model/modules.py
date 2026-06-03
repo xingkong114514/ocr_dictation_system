@@ -12,7 +12,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class VarianceAdaptor(nn.Module):
-    """Variance Adaptor"""
+
 
     def __init__(self, preprocess_config, model_config):
         super(VarianceAdaptor, self).__init__()
@@ -128,7 +128,6 @@ class VarianceAdaptor(nn.Module):
             )
             x = x + energy_embedding
 
-        # prosody prediction
         prosody_prediction, prosody_embedding = self.get_prosody_embedding(x, src_mask)
         x = x + prosody_embedding
 
@@ -154,7 +153,7 @@ class VarianceAdaptor(nn.Module):
             )
             x = x + energy_embedding
 
-        # `return` add `prosody prediction`
+
         return (
             x,
             pitch_prediction,
@@ -168,7 +167,7 @@ class VarianceAdaptor(nn.Module):
 
 
 class LengthRegulator(nn.Module):
-    """Length Regulator"""
+
 
     def __init__(self):
         super(LengthRegulator, self).__init__()
@@ -202,7 +201,7 @@ class LengthRegulator(nn.Module):
 
 
 class VariancePredictor(nn.Module):
-    """Duration, Pitch and Energy Predictor"""
+
 
     def __init__(self, model_config):
         super(VariancePredictor, self).__init__()
@@ -258,9 +257,7 @@ class VariancePredictor(nn.Module):
 
 
 class Conv(nn.Module):
-    """
-    Convolution Module
-    """
+
 
     def __init__(
         self,
@@ -273,16 +270,7 @@ class Conv(nn.Module):
         bias=True,
         w_init="linear",
     ):
-        """
-        :param in_channels: dimension of input
-        :param out_channels: dimension of output
-        :param kernel_size: size of kernel
-        :param stride: size of stride
-        :param padding: size of padding
-        :param dilation: dilation rate
-        :param bias: boolean. if True, bias is included.
-        :param w_init: str. weight inits with xavier initialization.
-        """
+
         super(Conv, self).__init__()
 
         self.conv = nn.Conv1d(
@@ -304,7 +292,7 @@ class Conv(nn.Module):
 
 
 class ProsodyPredictor(nn.Module):
-    """Duration, Pitch and Energy Predictor"""
+
 
     def __init__(self, model_config):
         super(ProsodyPredictor, self).__init__()

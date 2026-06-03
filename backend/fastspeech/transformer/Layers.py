@@ -8,7 +8,7 @@ from .SubLayers import MultiHeadAttention, PositionwiseFeedForward
 
 
 class FFTBlock(torch.nn.Module):
-    """FFT Block"""
+
 
     def __init__(self, d_model, n_head, d_k, d_v, d_inner, kernel_size, dropout=0.1):
         super(FFTBlock, self).__init__()
@@ -64,9 +64,6 @@ class ConvNorm(torch.nn.Module):
 
 
 class PostNet(nn.Module):
-    """
-    PostNet: Five 1-d convolution with 512 channels and kernel size 5
-    """
 
     def __init__(
         self,

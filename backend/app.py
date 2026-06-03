@@ -1,8 +1,5 @@
 from flask import Flask
 from flask_cors import CORS
-
-
-from api.record_api import record_bp
 from api.list_api import list_bp
 from api.dictation_content import dictation_content_bp
 from api.wav_file import wav_file_bp
@@ -16,19 +13,9 @@ from api.parent import parent_bp
 from api.homework import homework_bp
 from api.wrong_word import wrong_word_bp
 def create_app():
-    """
-    Flask 应用工厂函数
-    便于后期扩展、测试和部署
-    """
     app = Flask(__name__)
-
-    # 解决微信小程序跨域问题
     CORS(app)
-
-    # 基础配置
     app.config.from_object('config')
-
-    # 注册蓝图
     app.register_blueprint(record_bp, url_prefix='/api/record')
     app.register_blueprint(list_bp, url_prefix='/api/list')
     app.register_blueprint(dictation_content_bp, url_prefix='/api/dictation_content')
@@ -41,16 +28,13 @@ def create_app():
     app.register_blueprint(parent_bp, url_prefix='/api/parent')
     app.register_blueprint(homework_bp, url_prefix='/api/homework')
     app.register_blueprint(wrong_word_bp, url_prefix='/api/wrong_word')
-    # 健康检查接口（测试服务是否启动）
     @app.route('/')
     def index():
         return {
             "code": 200,
             "msg": "OCR Dictation System Backend Running"
         }
-
     return app
-
 
 if __name__ == '__main__':
     app = create_app()

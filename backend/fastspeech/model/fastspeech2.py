@@ -8,7 +8,7 @@ from fastspeech.utils.tools import get_mask_from_lengths
 
 
 class FastSpeech2(nn.Module):
-    """ FastSpeech2 """
+
 
     def __init__(self, preprocess_config, model_config):
         super(FastSpeech2, self).__init__()
@@ -61,8 +61,8 @@ class FastSpeech2(nn.Module):
             else None
         )
 
-        # print('***********', char_vecs)
-        output = self.encoder(texts, src_masks, char_vecs=char_vecs)    ##############
+
+        output = self.encoder(texts, src_masks, char_vecs=char_vecs)
 
         if self.speaker_emb is not None:
             output = output + self.speaker_emb(speakers).unsqueeze(1).expand(
@@ -77,7 +77,7 @@ class FastSpeech2(nn.Module):
             d_rounded,
             mel_lens,
             mel_masks,
-            prosody_predictions  # add prosody prediction
+            prosody_predictions
         ) = self.variance_adaptor(
             output,
             src_masks,
