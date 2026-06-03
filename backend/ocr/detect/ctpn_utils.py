@@ -1,65 +1,52 @@
-#-*- coding:utf-8 -*-
-#'''
-# Created on 18-12-11 上午10:05
-#
-# @Author: Greg Gao(laygin)
-#'''
+
 import numpy as np
 import cv2
 from ocr.detect.config import *
 
 
 def resize(image, width=None, height=None, inter=cv2.INTER_AREA):
-    # initialize the dimensions of the image to be resized and
-    # grab the image size
+
     dim = None
     (h, w) = image.shape[:2]
 
-    # if both the width and height are None, then return the
-    # original image
+
     if width is None and height is None:
         return image
 
-    # check to see if the width is None
+
     if width is None:
-        # calculate the ratio of the height and construct the
-        # dimensions
+
         r = height / float(h)
         dim = (int(w * r), height)
 
-    # otherwise, the height is None
+
     else:
-        # calculate the ratio of the width and construct the
-        # dimensions
+
         r = width / float(w)
         dim = (width, int(h * r))
 
-    # resize the image
+
     resized = cv2.resize(image, dim, interpolation=inter)
 
-    # return the resized image
+
     return resized
 
 
-# right
+
 def gen_anchor(featuresize, scale):
-    """
-        gen base anchor from feature map [HXW][9][4]
-        reshape  [HXW][9][4] to [HXWX9][4]
-    """
+
     heights = [11, 16, 23, 33, 48, 68, 97, 139, 198, 283]
     widths = [16, 16, 16, 16, 16, 16, 16, 16, 16, 16]
 
-    # gen k=9 anchor size (h,w)
     heights = np.array(heights).reshape(len(heights), 1)
     widths = np.array(widths).reshape(len(widths), 1)
 
     base_anchor = np.array([0, 0, 15, 15])
-    # center x,y
+
     xt = (base_anchor[0] + base_anchor[2]) * 0.5
     yt = (base_anchor[1] + base_anchor[3]) * 0.5
 
-    # x1 y1 x2 y2
+
     x1 = xt - widths * 0.5
     y1 = yt - heights * 0.5
     x2 = xt + widths * 0.5
@@ -69,7 +56,7 @@ def gen_anchor(featuresize, scale):
     h, w = featuresize
     shift_x = np.arange(0, w) * scale
     shift_y = np.arange(0, h) * scale
-    # apply shift
+
     anchor = []
     for i in shift_y:
         for j in shift_x:
@@ -78,10 +65,7 @@ def gen_anchor(featuresize, scale):
 
 
 def cal_iou(box1, box1_area, boxes2, boxes2_area):
-    """
-    box1 [x1,y1,x2,y2]
-    boxes2 [Msample,x1,y1,x2,y2]
-    """
+
     x1 = np.maximum(box1[0], boxes2[:, 0])
     x2 = np.minimum(box1[2], boxes2[:, 2])
     y1 = np.maximum(box1[1], boxes2[:, 1])
@@ -93,17 +77,13 @@ def cal_iou(box1, box1_area, boxes2, boxes2_area):
 
 
 def cal_overlaps(boxes1, boxes2):
-    """
-    boxes1 [Nsample,x1,y1,x2,y2]  anchor
-    boxes2 [Msample,x1,y1,x2,y2]  grouth-box
 
-    """
     area1 = (boxes1[:, 0] - boxes1[:, 2]) * (boxes1[:, 1] - boxes1[:, 3])
     area2 = (boxes2[:, 0] - boxes2[:, 2]) * (boxes2[:, 1] - boxes2[:, 3])
 
     overlaps = np.zeros((boxes1.shape[0], boxes2.shape[0]))
 
-    # calculate the intersection of  boxes1(anchor) and boxes2(GT box)
+
     for i in range(boxes1.shape[0]):
         overlaps[i][:] = cal_iou(boxes1[i], area1[i], boxes2, area2)
 
@@ -111,10 +91,7 @@ def cal_overlaps(boxes1, boxes2):
 
 
 def bbox_transfrom(anchors, gtboxes):
-    """
-     compute relative predicted vertical coordinates Vc ,Vh
-        with respect to the bounding box location of an anchor
-    """
+
     regr = np.zeros((anchors.shape[0], 2))
     Cy = (gtboxes[:, 1] + gtboxes[:, 3]) * 0.5
     Cya = (anchors[:, 1] + anchors[:, 3]) * 0.5
@@ -126,11 +103,9 @@ def bbox_transfrom(anchors, gtboxes):
 
     return np.vstack((Vc, Vh)).transpose()
 
-# right
+
 def bbox_transfor_inv(anchor, regr):
-    """
-        return predict bbox
-    """
+
 
     Cya = (anchor[:, 1] + anchor[:, 3]) * 0.5
     ha = anchor[:, 3] - anchor[:, 1] + 1
@@ -150,20 +125,20 @@ def bbox_transfor_inv(anchor, regr):
 
     return bbox
 
-# right
+
 def clip_box(bbox, im_shape):
-    # x1 >= 0
+
     bbox[:, 0] = np.maximum(np.minimum(bbox[:, 0], im_shape[1] - 1), 0)
-    # y1 >= 0
+
     bbox[:, 1] = np.maximum(np.minimum(bbox[:, 1], im_shape[0] - 1), 0)
-    # x2 < im_shape[1]
+
     bbox[:, 2] = np.maximum(np.minimum(bbox[:, 2], im_shape[1] - 1), 0)
-    # y2 < im_shape[0]
+
     bbox[:, 3] = np.maximum(np.minimum(bbox[:, 3], im_shape[0] - 1), 0)
 
     return bbox
 
-# right
+
 def filter_bbox(bbox, minsize):
     ws = bbox[:, 2] - bbox[:, 0] + 1
     hs = bbox[:, 3] - bbox[:, 1] + 1
@@ -174,31 +149,28 @@ def filter_bbox(bbox, minsize):
 def cal_rpn(imgsize, featuresize, scale, gtboxes):
     imgh, imgw = imgsize
 
-    # gen base anchor
     base_anchor = gen_anchor(featuresize, scale)
 
-    # calculate iou
+
     overlaps = cal_overlaps(base_anchor, gtboxes)
 
-    # init labels -1 don't care  0 is negative  1 is positive
+
     labels = np.empty(base_anchor.shape[0])
     labels.fill(-1)
 
-    # for each GT box corresponds to an anchor which has highest IOU
     gt_argmax_overlaps = overlaps.argmax(axis=0)
 
-    # the anchor with the highest IOU overlap with a GT box
+
     anchor_argmax_overlaps = overlaps.argmax(axis=1)
     anchor_max_overlaps = overlaps[range(overlaps.shape[0]), anchor_argmax_overlaps]
 
-    # IOU > IOU_POSITIVE
     labels[anchor_max_overlaps > IOU_POSITIVE] = 1
-    # IOU <IOU_NEGATIVE
+
     labels[anchor_max_overlaps < IOU_NEGATIVE] = 0
-    # ensure that every GT box has at least one positive RPN region
+
     labels[gt_argmax_overlaps] = 1
 
-    # only keep anchors inside the image
+
     outside_anchor = np.where(
         (base_anchor[:, 0] < 0) |
         (base_anchor[:, 1] < 0) |
@@ -207,22 +179,21 @@ def cal_rpn(imgsize, featuresize, scale, gtboxes):
     )[0]
     labels[outside_anchor] = -1
 
-    # subsample positive labels ,if greater than RPN_POSITIVE_NUM(default 128)
+
     fg_index = np.where(labels == 1)[0]
     if (len(fg_index) > RPN_POSITIVE_NUM):
         labels[np.random.choice(fg_index, len(fg_index) - RPN_POSITIVE_NUM, replace=False)] = -1
 
-    # subsample negative labels
+
     bg_index = np.where(labels == 0)[0]
     num_bg = RPN_TOTAL_NUM - np.sum(labels == 1)
     if (len(bg_index) > num_bg):
-        # print('bgindex:',len(bg_index),'num_bg',num_bg)
+
         labels[np.random.choice(bg_index, len(bg_index) - num_bg, replace=False)] = -1
 
-    # calculate bbox targets
-    # debug here
+
     bbox_targets = bbox_transfrom(base_anchor, gtboxes[anchor_argmax_overlaps, :])
-    # bbox_targets=[]
+
 
     return [labels, bbox_targets], base_anchor
 
@@ -256,7 +227,7 @@ def nms(dets, thresh):
     return keep
 
 
-# for predict
+
 class Graph:
     def __init__(self, graph):
         self.graph = graph
@@ -288,9 +259,7 @@ class TextLineCfg:
 
 
 class TextProposalGraphBuilder:
-    """
-        Build Text proposals into a graph.
-    """
+
 
     def get_successions(self, index):
         box = self.text_proposals[index]
@@ -357,16 +326,12 @@ class TextProposalGraphBuilder:
                 continue
             succession_index = successions[np.argmax(scores[successions])]
             if self.is_succession_node(index, succession_index):
-                # NOTE: a box can have multiple successions(precursors) if multiple successions(precursors)
-                # have equal scores.
+
                 graph[index, succession_index] = True
         return Graph(graph)
 
 
 class TextProposalConnectorOriented:
-    """
-        Connect text proposals into text lines
-    """
 
     def __init__(self):
         self.graph_builder = TextProposalGraphBuilder()
@@ -376,72 +341,66 @@ class TextProposalConnectorOriented:
         return graph.sub_graphs_connected()
 
     def fit_y(self, X, Y, x1, x2):
-        # len(X) != 0
-        # if X only include one point, the function will get line y=Y[0]
+
         if np.sum(X == X[0]) == len(X):
             return Y[0], Y[0]
         p = np.poly1d(np.polyfit(X, Y, 1))
         return p(x1), p(x2)
 
     def get_text_lines(self, text_proposals, scores, im_size):
-        """
-        text_proposals:boxes
 
-        """
-        # tp=text proposal
-        tp_groups = self.group_text_proposals(text_proposals, scores, im_size)  # 首先还是建图，获取到文本行由哪几个小框构成
-
+        tp_groups = self.group_text_proposals(text_proposals, scores, im_size)
         text_lines = np.zeros((len(tp_groups), 8), np.float32)
 
         for index, tp_indices in enumerate(tp_groups):
-            text_line_boxes = text_proposals[list(tp_indices)]  # 每个文本行的全部小框
-            X = (text_line_boxes[:, 0] + text_line_boxes[:, 2]) / 2  # 求每一个小框的中心x，y坐标
+            text_line_boxes = text_proposals[list(tp_indices)]
+            X = (text_line_boxes[:, 0] + text_line_boxes[:, 2]) / 2
             Y = (text_line_boxes[:, 1] + text_line_boxes[:, 3]) / 2
 
-            z1 = np.polyfit(X, Y, 1)  # 多项式拟合，根据之前求的中心店拟合一条直线（最小二乘）
+            z1 = np.polyfit(X, Y, 1)
 
-            x0 = np.min(text_line_boxes[:, 0])  # 文本行x坐标最小值
-            x1 = np.max(text_line_boxes[:, 2])  # 文本行x坐标最大值
+            x0 = np.min(text_line_boxes[:, 0])
+            x1 = np.max(text_line_boxes[:, 2])
 
-            offset = (text_line_boxes[0, 2] - text_line_boxes[0, 0]) * 0.5  # 小框宽度的一半
+            offset = (text_line_boxes[0, 2] - text_line_boxes[0, 0]) * 0.5
 
-            # 以全部小框的左上角这个点去拟合一条直线，然后计算一下文本行x坐标的极左极右对应的y坐标
+
             lt_y, rt_y = self.fit_y(text_line_boxes[:, 0], text_line_boxes[:, 1], x0 + offset, x1 - offset)
-            # 以全部小框的左下角这个点去拟合一条直线，然后计算一下文本行x坐标的极左极右对应的y坐标
+
             lb_y, rb_y = self.fit_y(text_line_boxes[:, 0], text_line_boxes[:, 3], x0 + offset, x1 - offset)
 
-            score = scores[list(tp_indices)].sum() / float(len(tp_indices))  # 求全部小框得分的均值作为文本行的均值
+            score = scores[list(tp_indices)].sum() / float(len(tp_indices))
 
             text_lines[index, 0] = x0
-            text_lines[index, 1] = min(lt_y, rt_y)  # 文本行上端 线段 的y坐标的小值
+            text_lines[index, 1] = min(lt_y, rt_y)
             text_lines[index, 2] = x1
-            text_lines[index, 3] = max(lb_y, rb_y)  # 文本行下端 线段 的y坐标的大值
-            text_lines[index, 4] = score  # 文本行得分
-            text_lines[index, 5] = z1[0]  # 根据中心点拟合的直线的k，b
+            text_lines[index, 3] = max(lb_y, rb_y)
+            text_lines[index, 4] = score
+            text_lines[index, 5] = z1[0]
             text_lines[index, 6] = z1[1]
-            height = np.mean((text_line_boxes[:, 3] - text_line_boxes[:, 1]))  # 小框平均高度
+            height = np.mean((text_line_boxes[:, 3] - text_line_boxes[:, 1]))
             text_lines[index, 7] = height + 2.5
 
         text_recs = np.zeros((len(text_lines), 9))
         index = 0
         for line in text_lines:
-            b1 = line[6] - line[7] / 2  # 根据高度和文本行中心线，求取文本行上下两条线的b值
+            b1 = line[6] - line[7] / 2
             b2 = line[6] + line[7] / 2
             x1 = line[0]
-            y1 = line[5] * line[0] + b1  # 左上
+            y1 = line[5] * line[0] + b1
             x2 = line[2]
-            y2 = line[5] * line[2] + b1  # 右上
+            y2 = line[5] * line[2] + b1
             x3 = line[0]
-            y3 = line[5] * line[0] + b2  # 左下
+            y3 = line[5] * line[0] + b2
             x4 = line[2]
-            y4 = line[5] * line[2] + b2  # 右下
+            y4 = line[5] * line[2] + b2
             disX = x2 - x1
             disY = y2 - y1
-            width = np.sqrt(disX * disX + disY * disY)  # 文本行宽度
+            width = np.sqrt(disX * disX + disY * disY)
 
-            fTmp0 = y3 - y1  # 文本行高度
+            fTmp0 = y3 - y1
             fTmp1 = fTmp0 * disY / width
-            x = np.fabs(fTmp1 * disX / width)  # 做补偿
+            x = np.fabs(fTmp1 * disX / width)
             y = np.fabs(fTmp1 * disY / width)
             if line[5] < 0:
                 x1 -= x

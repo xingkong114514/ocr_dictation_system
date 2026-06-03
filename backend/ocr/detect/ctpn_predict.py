@@ -17,7 +17,7 @@ gpu = True
 if not torch.cuda.is_available():
     gpu = False
 device = torch.device('cuda:0' if gpu else 'cpu')
-# weights = os.path.join(config.checkpoints_dir, 'CTPN.pth')
+
 weights = os.path.join("./ocr/checkpoints", 'CTPN.pth')
 model = CTPN_Model()
 model.load_state_dict(torch.load(weights, map_location=device)['model_state_dict'])
@@ -47,31 +47,29 @@ def get_det_boxes(image,display = True, expand = True):
         anchor = gen_anchor((int(h / 16), int(w / 16)), 16)
         bbox = bbox_transfor_inv(anchor, regr)
         bbox = clip_box(bbox, [h, w])
-        # print(bbox.shape)
+
 
         fg = np.where(cls_prob[0, :, 1] > prob_thresh)[0]
-        # print(np.max(cls_prob[0, :, 1]))
+
         select_anchor = bbox[fg, :]
         select_score = cls_prob[0, fg, 1]
         select_anchor = select_anchor.astype(np.int32)
-        # print(select_anchor.shape)
         keep_index = filter_bbox(select_anchor, 16)
 
-        # nms
+
         select_anchor = select_anchor[keep_index]
         select_score = select_score[keep_index]
         select_score = np.reshape(select_score, (select_score.shape[0], 1))
         nmsbox = np.hstack((select_anchor, select_score))
         keep = nms(nmsbox, 0.3)
-        # print(keep)
+
         select_anchor = select_anchor[keep]
         select_score = select_score[keep]
 
-        # text line-
+
         textConn = TextProposalConnectorOriented()
         text = textConn.get_text_lines(select_anchor, select_score, [h, w])
 
-        # expand text
         if expand:
             for idx in range(len(text)):
                 text[idx][0] = max(text[idx][0] - 10, 0)
@@ -80,7 +78,7 @@ def get_det_boxes(image,display = True, expand = True):
                 text[idx][6] = min(text[idx][6] + 10, w - 1)
 
 
-        # print(text)
+
         if display:
             blank = np.zeros(image_c.shape,dtype=np.uint8)
             for box in select_anchor:
@@ -102,8 +100,7 @@ def get_det_boxes(image,display = True, expand = True):
                             (255,0,0),
                             2,
                             cv2.LINE_AA)
-            # dis(image_c)
-        # print(text)
+
         return text,image_c,image_r
 
 if __name__ == '__main__':

@@ -9,7 +9,6 @@ db_name = "ocr"
 db_user = "postgres"
 db_password = "123456"
 txt_file = r"D:/ocr_dictation_system/backend/course.txt"
-# =====================================
 
 line_re = re.compile(r"^\s*([1-6][+-])-(\d+)-(\d+)-(\d+)-(.+?)\s*$")
 

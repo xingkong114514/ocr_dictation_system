@@ -145,7 +145,6 @@ class Generator(torch.nn.Module):
         self.conv_post = weight_norm(Conv1d(ch, 1, 7, 1, padding=3))
         self.ups.apply(init_weights)
         self.conv_post.apply(init_weights)
-
     def forward(self, x):
         x = self.conv_pre(x)
         for i in range(self.num_upsamples):
